@@ -1,0 +1,7 @@
+/.ipynb_checkpoints
+/__pycache__
+/data
+/documents
+/model
+test.py
+notebook.ipynb
