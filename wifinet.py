@@ -11,12 +11,13 @@ from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint
 
 class WIFINet():
     ''''''
-    def __init__(self, input_shape, output_shape, dilation_depth, num_filters, load = False, directory = './model/'):
+    def __init__(self, input_shape, output_shape, dilation_depth, num_filters, verbose = 1, load = False, directory = './model/'):
         ''''''
         self.input_shape = input_shape
         self.output_shape = output_shape
         self.dilation_depth = dilation_depth
         self.num_filters = num_filters
+        self.verbose = verbose
 
         if load:
             self.model = load_model(directory + 'wifinet.h5')
@@ -53,9 +54,8 @@ class WIFINet():
         x = Input(shape = self.input_shape, name = 'input')
         
         #residual layers
-        skip_connections = []
         out = Conv1D(self.num_filters, 2, name = 'conv_1', dilation_rate = 1, padding = 'causal')(x)
-        out = x
+        skip_connections = []
         for i in range(1, self.dilation_depth + 1):
             out, skip = self.residual_block(out, i)
             skip_connections.append(skip)
@@ -97,7 +97,7 @@ class WIFINet():
                         epochs = epochs, batch_size = batch_size, shuffle = True,
                         initial_epoch = self.current_epoch,
                         callbacks = callbacks,
-                        verbose = 1 ) #fit model
+                        verbose = self.verbose ) #fit model
                         
         self.current_epoch += epochs
         return
