@@ -7,15 +7,15 @@ def process_raw_data(size = 10000, normalize = False, seed = None):
     num_standards = len(standards)
     num_tests = np.asarray([5, 5, 5, 25, 25, 25, 27])
     num_repeats = np.asarray([5, 5, 5, 5, 5, 5, 5])
-    num_samples = np.asarray([600, 600, 600, 120, 120, 120, 112])
+    num_samples = np.asarray([675, 675, 675, 135, 135, 135, 125])
     total_samples = np.sum(num_tests * num_repeats * num_samples)
-    random_spacing = np.asarray([500000, 500000, 500000, 3000000, 3000000, 3000000, 3000000]);
+    random_spacing = np.asarray([570000, 570000, 570000, 2900000, 2900000, 2900000, 3100000]);
     
     path = 'data/info.csv' #generate path for info
-    info = np.loadtxt(open(path), delimiter = ',', dtype = np.float) #load test info
+    info = np.loadtxt(open(path), delimiter = ',', dtype = np.float32) #load test info
     
-    IQ = np.empty((total_samples, 2, size), dtype = np.float)
-    labels = np.empty((total_samples, 8), dtype = np.float)
+    IQ = np.empty((total_samples, 2, size), dtype = np.float32)
+    labels = np.empty((total_samples, 8), dtype = np.float32)
     
     idx = 0;
     sample_index = 0
@@ -45,11 +45,6 @@ def process_raw_data(size = 10000, normalize = False, seed = None):
                 sample_index += num_samples[i]
                 idx += 1 #increment info index
     
-    #randomly delete 120 samples from AX_AC_N to balance classes
-    deleteMask = np.sort(np.random.choice([i for i in range(90000, 105120)], (120,), replace = False))
-    IQ = np.delete(IQ, deleteMask, axis = 0)
-    labels = np.delete(labels, deleteMask, axis = 0)
-    
     #save arrays to disk
     np.save('data/data.npy', IQ)
     np.save('data/labels.npy', labels)
@@ -59,8 +54,8 @@ def process_raw_data(size = 10000, normalize = False, seed = None):
 
 def sample_IQ_signal(signal, info, num_samples, size, random_spacing, trim_range):
     ''''''
-    IQ = np.zeros((num_samples, 2, size), dtype = np.float) #allocate memory for data
-    labels = np.zeros((num_samples, 4), dtype = np.float) #allocate memory for labels
+    IQ = np.zeros((num_samples, 2, size), dtype = np.float32) #allocate memory for data
+    labels = np.zeros((num_samples, 4), dtype = np.float32) #allocate memory for labels
 
     I, Q = [signal[idx::2] for idx in range(2)] #separate interweaved data into I and Q
     I, Q = I[trim_range], Q[trim_range] #trim off beginnning and end of data
@@ -78,7 +73,7 @@ def sample_IQ_signal(signal, info, num_samples, size, random_spacing, trim_range
 
 
 def main():
-    process_raw_data(size = 15000, seed = 42)
+    process_raw_data(size = 30000, seed = 42)
 
 
 if __name__ == '__main__':
