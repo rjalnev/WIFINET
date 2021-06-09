@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import winsound
 
 def generate_index_array(sample_size):
     ''''''
@@ -40,7 +41,8 @@ def plot_samples(I, info, ROWS = 5, COLUMNS = 5, idx_array = None):
             axes[j][k].set_title('{} - Limit: {}  Actual: {}  DC: {}'.format(standards[int(info[i, 0])], info[i, 1], info[i, 2], info[i, 3]))
             
     plt.show()
-    
+
+
 def save_samples(I, info, idx_array):
     ''''''
     
@@ -63,8 +65,6 @@ def save_samples(I, info, idx_array):
     print('Saved to {} ...'.format(path))
 
     
-    
-
 def plot(I, info):
     ''''''
     ROWS, COLUMNS = 5, 5
@@ -78,3 +78,13 @@ def plot(I, info):
             axes[j][k].set_title('{} - Limit: {}'.format(standards[int(info[j, k, 0])], info[j, k, 1]), fontsize=10)
     plt.tight_layout(pad=0.4, w_pad=0.2, h_pad=1.0)
     plt.show()
+    
+
+def play_sound(freq = 1000, duration = 3000):
+    ''''''
+    winsound.Beep(freq, duration)
+    
+
+def calc_accuracy(pred, act):
+    ''''''
+    return np.round(np.sum(pred == actual) / pred.shape[0] * 100, 2)
