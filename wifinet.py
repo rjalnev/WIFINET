@@ -12,35 +12,25 @@ from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint
 
 class WIFINet():
     ''''''
-    def __init__(self, input_shape, output_shape, dilation_depth, num_filters, O1, O2, D1, D2, verbose = 1, load = False, directory = './model/'):
+    def __init__(self, input_shape = None, output_shape = None, dilation_depth = None, num_filters = None, O1 = None, O2 = None, D1 = None, D2 = None):
         ''''''
-        self.input_shape = input_shape
-        self.output_shape = output_shape
-        self.dilation_depth = dilation_depth
-        self.num_filters = num_filters
-        self.O1 = O1
-        self.O2 = O2
-        self.D1 = D1
-        self.D2 = D2
-        self.verbose = verbose
-
-        if load:
-            self.model = load_model(directory + 'wifinet.h5')
-            self.current_epoch = np.genfromtxt(directory + 'wifinet_history.csv', delimiter = ',', skip_header = 1).shape[0]
+        if input_shape is None:
+            self.model = None
+            self.current_epoch = None
         else:
-            self.model = self.build_model()
+            self.model = self.build_model(input_shape, output_shape, dilation_depth, num_filters, O1, O2, D1, D2)
             self.current_epoch = 0
 
-    def residual_block(self, x, i):
+    def residual_block(self, x, i, num_filters):
         ''''''
-        sigm = Conv1D(self.num_filters,
+        sigm = Conv1D(num_filters,
                       2,
                       name = 'gate_sigm_{}'.format(2 ** i),
                       padding = 'causal',
                       activation = 'sigmoid',
                       dilation_rate = 2 ** i
                       )(x)
-        tanh = Conv1D(self.num_filters,
+        tanh = Conv1D(num_filters,
                       2,
                       name = 'filter_tanh_{}'.format(2 ** i),
                       padding = 'causal',
@@ -48,43 +38,40 @@ class WIFINet():
                       dilation_rate = 2 ** i
                       )(x)
         mult = Multiply(name = 'gate_filter_multiply_{}'.format(i))([tanh, sigm])
-        skip = Conv1D(self.num_filters, 1, name = 'skip_{}'.format(i))(mult)
+        skip = Conv1D(num_filters, 1, name = 'skip_{}'.format(i))(mult)
         res = Add(name = 'residual_block_{}'.format(i))([skip, x])
         return res, skip
         
-        
-    def build_model(self):
+    def build_model(self, input_shape, output_shape, dilation_depth, num_filters, O1, O2, D1, D2):
         ''''''
         #input layers
-        x = Input(shape = self.input_shape, name = 'input')
+        x = Input(shape = input_shape, name = 'input')
         
         #residual layers
-        out = Conv1D(self.num_filters, 1, name = 'conv_1', dilation_rate = 1, padding = 'causal')(x)
+        out = Conv1D(num_filters, 1, name = 'conv_1', dilation_rate = 1, padding = 'causal')(x)
         skip_connections = []
-        for i in range(1, self.dilation_depth + 1):
-            out, skip = self.residual_block(out, i)
+        for i in range(1, dilation_depth + 1):
+            out, skip = self.residual_block(out, i, num_filters)
             skip_connections.append(skip)
         out = Add(name = 'skip_connections')(skip_connections)
         
         #output layers
         out = Activation('relu')(out)
-        out = Conv1D(self.num_filters, self.O1, name = 'conv_2', dilation_rate = 1, padding = 'same', activation = 'relu')(out)
-        out = AveragePooling1D(self.O2, name = 'pooling', padding = 'same')(out)
+        out = Conv1D(num_filters, O1, name = 'conv_2', dilation_rate = 1, padding = 'same', activation = 'relu')(out)
+        out = AveragePooling1D(O2, name = 'pooling', padding = 'same')(out)
         out = Flatten(name = 'flatten')(out)
-        out = Dense(self.D1, name = 'dense_1', kernel_initializer = 'he_uniform', activation = 'relu')(out)
+        out = Dense(D1, name = 'dense_1', kernel_initializer = 'he_uniform', activation = 'relu')(out)
         out = Dropout(0.5, name = 'dropout_1')(out)
-        out = Dense(self.D2, name = 'dense_2', kernel_initializer = 'he_uniform', activation = 'relu')(out)
+        out = Dense(D2, name = 'dense_2', kernel_initializer = 'he_uniform', activation = 'relu')(out)
         out = Dropout(0.5, name = 'dropout_2')(out)
-        out = Dense(self.output_shape[0], name = 'predicted_signal', activation = 'softmax')(out)
+        out = Dense(output_shape[0], name = 'predicted_signal', activation = 'softmax')(out)
         
         #model
         model = Model(x, out)
         model.summary()
-        
         return model
 
-
-    def fit(self, X, Y, validation_data = None, epochs = 10, batch_size = 32, optimizer = 'adam',
+    def fit(self, X, Y, validation_data = None, epochs = 10, batch_size = 32, optimizer = 'adam', verbose = 1, 
             save = False, directory = './model/', model_name = 'wifinet', hist_name = 'wifinet_history'):
         ''''''
         if save: # set callback functions if saving model
@@ -101,16 +88,24 @@ class WIFINet():
             callbacks = None
         
         self.model.compile(optimizer, 'categorical_crossentropy', ['accuracy']) #compile model
-        self.model.fit( X, Y, validation_data = validation_data,
-                        epochs = epochs, batch_size = batch_size, shuffle = True,
-                        initial_epoch = self.current_epoch,
-                        callbacks = callbacks,
-                        verbose = self.verbose ) #fit model
-                        
+        start = time.time()
+        hist = self.model.fit(X, Y, validation_data = validation_data,
+                              epochs = epochs, batch_size = batch_size, shuffle = True,
+                              initial_epoch = self.current_epoch,
+                              callbacks = callbacks,
+                              verbose = verbose ) #fit model
+        print('Training took {} seconds.'.format(round(time.time() - start, 2)))
         self.current_epoch += epochs
-        return
+        return hist
 
-
+    @classmethod
+    def load(cls, model_path = './model/wifinet.h5', hist_path = './model/wifinet_history.csv'):
+        _cls = cls.__new__(cls)
+        _cls.model = load_model(model_path)
+        hist_shape = np.genfromtxt(hist_path, delimiter = ',', skip_header = 1).shape
+        _cls.current_epoch = hist_shape[0] if len(hist_shape) > 1 else 1
+        return _cls
+        
     def predict(self, x):
         ''''''
         start = time.time()
