@@ -1,9 +1,10 @@
 import os
 import numpy as np
+import time
 
 #TensorFlow 2.0
 from tensorflow.keras.models import Model, load_model
-from tensorflow.keras.layers import Input, Dense, Flatten, Activation, Add, Multiply, Conv1D, AveragePooling1D, Concatenate
+from tensorflow.keras.layers import Input, Dense, Flatten, Activation, Add, Multiply, Conv1D, AveragePooling1D, Dropout
 from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint
 #from tensorflow.keras import backend as K
 #from tensorflow.keras import metrics
@@ -11,12 +12,16 @@ from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint
 
 class WIFINet():
     ''''''
-    def __init__(self, input_shape, output_shape, dilation_depth, num_filters, verbose = 1, load = False, directory = './model/'):
+    def __init__(self, input_shape, output_shape, dilation_depth, num_filters, O1, O2, D1, D2, verbose = 1, load = False, directory = './model/'):
         ''''''
         self.input_shape = input_shape
         self.output_shape = output_shape
         self.dilation_depth = dilation_depth
         self.num_filters = num_filters
+        self.O1 = O1
+        self.O2 = O2
+        self.D1 = D1
+        self.D2 = D2
         self.verbose = verbose
 
         if load:
@@ -54,7 +59,7 @@ class WIFINet():
         x = Input(shape = self.input_shape, name = 'input')
         
         #residual layers
-        out = Conv1D(self.num_filters, 2, name = 'conv_1', dilation_rate = 1, padding = 'causal')(x)
+        out = Conv1D(self.num_filters, 1, name = 'conv_1', dilation_rate = 1, padding = 'causal')(x)
         skip_connections = []
         for i in range(1, self.dilation_depth + 1):
             out, skip = self.residual_block(out, i)
@@ -63,11 +68,13 @@ class WIFINet():
         
         #output layers
         out = Activation('relu')(out)
-        out = Conv1D(self.num_filters, 50, name = 'conv_2', dilation_rate = 1, padding = 'same', activation = 'relu')(out)
-        out = AveragePooling1D(50, name = 'avg_pool', padding = 'same')(out)
+        out = Conv1D(self.num_filters, self.O1, name = 'conv_2', dilation_rate = 1, padding = 'same', activation = 'relu')(out)
+        out = AveragePooling1D(self.O2, name = 'pooling', padding = 'same')(out)
         out = Flatten(name = 'flatten')(out)
-        out = Dense(4000, name = 'dense_1', activation = 'relu', kernel_initializer = 'he_uniform')(out)
-        out = Dense(40, name = 'dense_2', activation = 'relu', kernel_initializer = 'he_uniform')(out)
+        out = Dense(self.D1, name = 'dense_1', kernel_initializer = 'he_uniform', activation = 'relu')(out)
+        out = Dropout(0.5, name = 'dropout_1')(out)
+        out = Dense(self.D2, name = 'dense_2', kernel_initializer = 'he_uniform', activation = 'relu')(out)
+        out = Dropout(0.5, name = 'dropout_2')(out)
         out = Dense(self.output_shape[0], name = 'predicted_signal', activation = 'softmax')(out)
         
         #model
@@ -77,12 +84,13 @@ class WIFINet():
         return model
 
 
-    def fit(self, X, Y, validation_data = None, epochs = 10, batch_size = 32, optimizer = 'adam', save = False, directory = './model/'):
+    def fit(self, X, Y, validation_data = None, epochs = 10, batch_size = 32, optimizer = 'adam',
+            save = False, directory = './model/', model_name = 'wifinet', hist_name = 'wifinet_history'):
         ''''''
         if save: # set callback functions if saving model
             if not os.path.exists(directory): os.makedirs(directory)
-            mpath = directory + "wifinet.h5"
-            hpath = directory + 'wifinet_history.csv'
+            mpath = directory + model_name + '.h5'
+            hpath = directory + hist_name + '.csv'
             if validation_data is None:
                 checkpoint = ModelCheckpoint(filepath = mpath, monitor = 'loss', verbose = 0, save_best_only = True)
             else:
@@ -102,6 +110,8 @@ class WIFINet():
         self.current_epoch += epochs
         return
 
+
     def predict(self, x):
         ''''''
-        return self.model.predict(x)
+        start = time.time()
+        return self.model.predict(x), round(time.time() - start, 2)
