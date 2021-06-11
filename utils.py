@@ -85,6 +85,6 @@ def play_sound(freq = 1000, duration = 3000):
     winsound.Beep(freq, duration)
     
 
-def calc_accuracy(pred, act):
+def calc_accuracy(pred, actual):
     ''''''
     return np.round(np.sum(pred == actual) / pred.shape[0] * 100, 2)
