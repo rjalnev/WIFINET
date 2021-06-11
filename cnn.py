@@ -1,60 +1,55 @@
 import os
 import numpy as np
+import time
 
 #TensorFlow 2.0
 from tensorflow.keras.models import Model, load_model
-from tensorflow.keras.layers import Input, Dense, Flatten, Activation, Conv1D, AveragePooling1D
+from tensorflow.keras.layers import Input, Dense, Flatten, Activation, Conv1D, AveragePooling1D, Dropout
 from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint
 
 class CNN():
     ''''''
-    def __init__(self, input_shape, output_shape, depth, filters, kernels, load = False, directory = './model/'):
+    def __init__(self, input_shape = None, output_shape = None, depth = None, filters = None, kernels = None, D1 = None, D2 = None):
         ''''''
-        self.input_shape = input_shape
-        self.output_shape = output_shape
-        self.depth = depth
-        self.filters = filters
-        self.kernels = kernels
-
-        if load:
-            self.model = load_model(directory + 'cnn.h5')
-            self.current_epoch = np.genfromtxt(directory + 'cnn_history.csv', delimiter = ',', skip_header = 1).shape[0]
+        if input_shape is None:
+            self.model = None
+            self.current_epoch = None
         else:
-            self.model = self.build_model()
+            self.model = self.build_model(input_shape, output_shape, depth, filters, kernels, D1, D2,)
             self.current_epoch = 0
         
-        
-    def build_model(self):
+    def build_model(self, input_shape, output_shape, depth, filters, kernels, D1, D2):
         ''''''
         #input layers
-        x = Input(shape = self.input_shape, name = 'input')
+        x = Input(shape = input_shape, name = 'input')
         out = x
         
         #conv layers
-        for i in range(len(self.depth)):
-            for j in range(self.depth[i]):
-                out = Conv1D(self.filters[i], self.kernels[i], name = 'conv_{}.{}'.format(i+1, j+1), dilation_rate = 1, padding = 'same', activation='relu')(out)
+        for i in range(len(depth)):
+            for j in range(depth[i]):
+                out = Conv1D(filters[i], kernels[i], name = 'conv_{}.{}'.format(i+1, j+1), dilation_rate = 1, padding = 'same', activation='relu')(out)
             out = AveragePooling1D(2, name = 'avg_pool_{}'.format(i+1), padding = 'same')(out)
         
         #output layers
         out = Flatten(name = 'flatten')(out)
-        out = Dense(1028, name = 'dense_1', activation = 'relu', kernel_initializer = 'he_uniform')(out)
-        out = Dense(512, name = 'dense_2', activation = 'relu', kernel_initializer = 'he_uniform')(out)
-        out = Dense(self.output_shape[0], name = 'predicted_signal', activation = 'softmax')(out)
+        out = Dense(D1, name = 'dense_1', activation = 'relu', kernel_initializer = 'he_uniform')(out)
+        out = Dropout(0.5, name = 'dropout_1')(out)
+        out = Dense(D2, name = 'dense_2', activation = 'relu', kernel_initializer = 'he_uniform')(out)
+        out = Dropout(0.5, name = 'dropout_2')(out)
+        out = Dense(output_shape[0], name = 'predicted_signal', activation = 'softmax')(out)
         
         #model
         model = Model(x, out)
         model.summary()
-        
         return model
 
-
-    def fit(self, X, Y, validation_data = None, epochs = 10, batch_size = 32, optimizer = 'adam', save = False, directory = './model/'):
+    def fit(self, X, Y, validation_data = None, epochs = 10, batch_size = 32, optimizer = 'adam', verbose = 1,
+            save = False, directory = './model/', model_name = 'cnn', hist_name = 'cnn_history'):
         ''''''
         if save: # set callback functions if saving model
             if not os.path.exists(directory): os.makedirs(directory)
-            mpath = directory + "cnn.h5"
-            hpath = directory + 'cnn_history.csv'
+            mpath = directory + model_name + ".h5"
+            hpath = directory + hist_name + '.csv'
             if validation_data is None:
                 checkpoint = ModelCheckpoint(filepath = mpath, monitor = 'loss', verbose = 0, save_best_only = True)
             else:
@@ -65,15 +60,25 @@ class CNN():
             callbacks = None
         
         self.model.compile(optimizer, 'categorical_crossentropy', ['accuracy']) #compile model
-        self.model.fit( X, Y, validation_data = validation_data,
-                        epochs = epochs, batch_size = batch_size, shuffle = True,
-                        initial_epoch = self.current_epoch,
-                        callbacks = callbacks,
-                        verbose = 1 ) #fit model
-                        
+        start = time.time()
+        hist = self.model.fit(X, Y, validation_data = validation_data,
+                              epochs = epochs, batch_size = batch_size, shuffle = True,
+                              initial_epoch = self.current_epoch,
+                              callbacks = callbacks,
+                              verbose = verbose ) #fit model
+        print('Training took {} seconds.'.format(round(time.time() - start, 2)))
         self.current_epoch += epochs
-        return
-
+        return hist
+        
+    @classmethod
+    def load(cls, model_path = './model/cnn.h5', hist_path = './model/cnn_history.csv'):
+        _cls = cls.__new__(cls)
+        _cls.model = load_model(model_path)
+        hist_shape = np.genfromtxt(hist_path, delimiter = ',', skip_header = 1).shape
+        _cls.current_epoch = hist_shape[0] if len(hist_shape) > 1 else 1
+        return _cls
+        
     def predict(self, x):
         ''''''
-        return self.model.predict(x)
+        start = time.time()
+        return self.model.predict(x), round(time.time() - start, 2)
