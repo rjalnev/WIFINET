@@ -80,5 +80,6 @@ class CNN():
         
     def predict(self, x):
         ''''''
+        print('Predicting class for {} samples ...'.format(x.shape[0]))
         start = time.time()
         return self.model.predict(x), round(time.time() - start, 2)
