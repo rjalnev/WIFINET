@@ -15,13 +15,14 @@ from tensorflow.random import set_seed as set_tf_seed
 
 from utils import play_sound, calc_accuracy
 from wifinet import WIFINet
+from ann import ANN
 from cnn import CNN
 from mlmodels import KNN, SVM, Tree, Forest, LogReg, GNB, AdaBoost
 
 def main():
     ''''''
     train, test, train_labels, test_labels = load_data() #load data
-    #train, test, train_labels, test_labels = np.random.randint(0, 90, size=(1000, 15000, 1)), np.random.randint(0, 90, size=(100, 15000, 1)), np.random.randint(0, 7, size=(1000,)), np.random.randint(0, 7, size=(100,)) #fake data for faster testing
+    #train, test, train_labels, test_labels = np.random.randint(0, 90, size=(1000, 20000, 1)), np.random.randint(0, 90, size=(100, 20000, 1)), np.random.randint(0, 7, size=(1000,)), np.random.randint(0, 7, size=(100,)) #fake data for faster testing
     
     #train 6 wifinet models using various sample lengths
     slen = [5000, 10000, 15000, 20000, 25000, 30000]
@@ -39,6 +40,14 @@ def main():
         opt = Adam(learning_rate = 1e-4, beta_1 = 0.9, beta_2 = 0.999, epsilon = 1e-07, amsgrad = False) #setup optimizer
         wnet.fit(train[:, 0:slen, :], to_categorical(train_labels), validation_data = (test[:, 0:slen, :], to_categorical(test_labels)),
                  epochs = 10, batch_size = 32, optimizer = opt, save = True, model_name = 'wifinet_D{}'.format(depth[i]), hist_name = 'wifinet_history_D{}'.format(depth[i])) #fit model
+
+    #train 6 ANNs of various depths
+    depth = [[1024, 128], [2048, 128], [4096, 128], [1024, 512, 128], [2048, 512, 128], [4096, 512, 128]]
+    for i in range(len(depth)):
+        ann = ANN((slen, ), (7, ), depth = depth[i]) #create model
+        opt = Adam(learning_rate = 1e-4, beta_1 = 0.9, beta_2 = 0.999, epsilon = 1e-07, amsgrad = False) #setup optimizer
+        ann.fit(train[:, 0:slen, :], to_categorical(train_labels), validation_data = (test[:, 0:slen, :], to_categorical(test_labels)),
+                epochs = 10, batch_size = 32, optimizer = opt, save = True, model_name = 'ann_D{}'.format(depth[i]), hist_name = 'ann_history_D{}'.format(depth[i])) #fit model
     
     #train 3 CNNs of various depths
     depth = [[1, 2, 1], [1,3,2], [2, 5, 3]]
@@ -159,11 +168,11 @@ def set_seeds(seed=42):
 
 
 if __name__ == '__main__':
-    try:
-        set_seeds()
-        main()
-        play_sound()
-    except Exception as err:
-        print('exception occurred ...')
-        print(err)
-        play_sound()
+    #try:
+    set_seeds()
+    main()
+    #    play_sound()
+    #except Exception as err:
+    #    print('exception occurred ...')
+    #    print(err)
+    #    play_sound()
