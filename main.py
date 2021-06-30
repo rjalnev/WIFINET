@@ -22,6 +22,7 @@ from mlmodels import KNN, SVM, Tree, Forest, LogReg, GNB, AdaBoost
 def main():
     ''''''
     train, test, train_labels, test_labels = load_data() #load data
+    return
     #train, test, train_labels, test_labels = np.random.randint(0, 90, size=(1000, 20000, 1)), np.random.randint(0, 90, size=(100, 20000, 1)), np.random.randint(0, 7, size=(1000,)), np.random.randint(0, 7, size=(100,)) #fake data for faster testing
     
     #train 6 wifinet models using various sample lengths
@@ -125,7 +126,7 @@ def main():
         print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels)))
     
 
-def load_data(normalize = True, type = 1):
+def load_data(normalize = True, norm_type = 1):
     ''''''
     path = ['data/data.npy', 'data/labels.npy']
     print('Loading data from {} and {} ...'.format(path[0], path[1]))
@@ -134,15 +135,15 @@ def load_data(normalize = True, type = 1):
     
     #normalize data
     if normalize:
-        if type == 1: #offset by threshold and scale to [-1, 1] while preserving zero location
+        if norm_type == 1: #offset by threshold and scale to [-1, 1] while preserving zero location
             threshold, abs_max = 59.0, np.max(np.abs(data))
             print('Normalizing data using threshold offset {} and absolute max value {} ...'.format(threshold, abs_max))
             data = (data + threshold) / abs_max
-        elif type == 2: #offset by threshold and an scale to [0, 1]
+        elif norm_type == 2: #offset by threshold and an scale to [0, 1]
             threshold, x_min, x_max = 59.0, np.min(data), np.max(data)
             print('Normalizing data using threshold offset {}, min value {}, and max value {} ...'.format(threshold, x_min, x_max))
             data = ((data + threshold) - x_min) / (x_max - x_min)
-        elif type == 3: #offset by threshold and scale to [-1, 1]
+        elif norm_type == 3: #offset by threshold and scale to [-1, 1]
             threshold, abs_max = 59.0, np.max(np.abs(data))
             print('Normalizing data using threshold offset {}, min value {}, and max value {} ...'.format(threshold, x_min, x_max))
             data = (2 * ((data + threshold) - x_min) / (x_max - x_min)) - 1
