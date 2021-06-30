@@ -22,7 +22,6 @@ from mlmodels import KNN, SVM, Tree, Forest, LogReg, GNB, AdaBoost
 def main():
     ''''''
     train, test, train_labels, test_labels = load_data() #load data
-    return
     #train, test, train_labels, test_labels = np.random.randint(0, 90, size=(1000, 20000, 1)), np.random.randint(0, 90, size=(100, 20000, 1)), np.random.randint(0, 7, size=(1000,)), np.random.randint(0, 7, size=(100,)) #fake data for faster testing
     
     #train 6 wifinet models using various sample lengths
