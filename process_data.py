@@ -1,7 +1,7 @@
 import numpy as np
 
 def process_raw_data(size = 10000, normalize = False, seed = None):
-    ''''''
+    '''Loop through all raw data files, sample the data, generate labels, and save as numpy array.'''
     np.random.seed(seed = seed) #set numpy seed
     standards = ['AX', 'AC', 'N', 'AX_AC', 'AX_N', 'AC_N', 'AX_AC_N']
     num_standards = len(standards)
@@ -53,7 +53,7 @@ def process_raw_data(size = 10000, normalize = False, seed = None):
 
 
 def sample_IQ_signal(signal, info, num_samples, size, random_spacing, trim_range):
-    ''''''
+    '''Separate IQ data, trim off begining and end, sample the data, and return sampled data with labels.'''
     IQ = np.zeros((num_samples, 2, size), dtype = np.float32) #allocate memory for data
     labels = np.zeros((num_samples, 4), dtype = np.float32) #allocate memory for labels
 
@@ -73,6 +73,7 @@ def sample_IQ_signal(signal, info, num_samples, size, random_spacing, trim_range
 
 
 def main():
+    '''Process the raw data and save as numpy arrays.'''
     process_raw_data(size = 30000, seed = 42)
 
 
