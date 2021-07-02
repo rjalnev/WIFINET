@@ -20,8 +20,8 @@ from cnn import CNN
 from mlmodels import KNN, SVM, Tree, Forest, LogReg, GNB, AdaBoost
 
 def main():
-    ''''''
-    train, test, train_labels, test_labels = load_data() #load data
+    '''Loads data and train various models.'''
+    train, test, train_labels, test_labels = load_data(normalize = True, norm_type = 1) #load data
     #train, test, train_labels, test_labels = np.random.randint(0, 90, size=(1000, 20000, 1)), np.random.randint(0, 90, size=(100, 20000, 1)), np.random.randint(0, 7, size=(1000,)), np.random.randint(0, 7, size=(100,)) #fake data for faster testing
     
     #train 6 wifinet models using various sample lengths
@@ -125,8 +125,8 @@ def main():
         print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels)))
     
 
-def load_data(normalize = True, norm_type = 1):
-    ''''''
+def load_data(normalize = True, norm_type = 1, for_training = True):
+    '''Load data. Normalize if true using specified method. If data is for training, expand dims and split into train and test sets.'''
     path = ['data/data.npy', 'data/labels.npy']
     print('Loading data from {} and {} ...'.format(path[0], path[1]))
     data = np.load(path[0])[:, 0, :] #load data and keep only I component
@@ -134,31 +134,35 @@ def load_data(normalize = True, norm_type = 1):
     
     #normalize data
     if normalize:
-        if norm_type == 1: #offset by threshold and scale to [-1, 1] while preserving zero location
+        if norm_type == 1: #offset by threshold to move to zero and scale to [-1, 1] while preserving zero location
             threshold, abs_max = 59.0, np.max(np.abs(data))
             print('Normalizing data using threshold offset {} and absolute max value {} ...'.format(threshold, abs_max))
             data = (data + threshold) / abs_max
         elif norm_type == 2: #offset by threshold and an scale to [0, 1]
-            threshold, x_min, x_max = 59.0, np.min(data), np.max(data)
-            print('Normalizing data using threshold offset {}, min value {}, and max value {} ...'.format(threshold, x_min, x_max))
-            data = ((data + threshold) - x_min) / (x_max - x_min)
+            x_min, x_max = np.min(data), np.max(data)
+            print('Normalizing data using min value {} and max value {} ...'.format(x_min, x_max))
+            data = (data - x_min) / (x_max - x_min)
         elif norm_type == 3: #offset by threshold and scale to [-1, 1]
-            threshold, abs_max = 59.0, np.max(np.abs(data))
-            print('Normalizing data using threshold offset {}, min value {}, and max value {} ...'.format(threshold, x_min, x_max))
-            data = (2 * ((data + threshold) - x_min) / (x_max - x_min)) - 1
+            x_min, x_max = np.min(data), np.max(data)
+            print('Normalizing data using min value {} and max value {} ...'.format(x_min, x_max))
+            data = 2 * (data - x_min) / (x_max - x_min) - 1
     
-    #expand dims
-    data = np.expand_dims(data, axis = 2)
-    #split dataset into train and test
-    labels = info[:, 0]
-    train, test, train_labels, test_labels = train_test_split(data, labels, test_size = 0.20, random_state = 42, shuffle = True, stratify = labels)
-    
-    print('Train Shape:', train.shape, 'Train Labels Shape:', train_labels.shape, 'Test Shape:', test.shape, 'Test Labels Shape:', test_labels.shape)
-    return train, test, train_labels, test_labels
-
+    if for_training:
+        #expand dims
+        print('Expanding dims and splitting into train and test sets ...')
+        data = np.expand_dims(data, axis = 2)
+        #split dataset into train and test
+        labels = info[:, 0]
+        train, test, train_labels, test_labels = train_test_split(data, labels, test_size = 0.20, random_state = 42, shuffle = True, stratify = labels)
+        print('Train Shape:', train.shape, 'Train Labels Shape:', train_labels.shape, 'Test Shape:', test.shape, 'Test Labels Shape:', test_labels.shape)
+        return train, test, train_labels, test_labels
+    else:
+        print('Data Shape:', data.shape, 'Labels Shape:', info.shape)
+        return data, info
+        
 
 def set_seeds(seed=42):
-    ''''''
+    '''Set all seeds to make training deterministic.'''
     os.environ['PYTHONHASHSEED'] = str(seed) #set python hash seed
     os.environ['TF_CUDNN_DETERMINISM'] = '1'
     os.environ['TF_DETERMINISTIC_OPS'] = '1'
@@ -168,11 +172,11 @@ def set_seeds(seed=42):
 
 
 if __name__ == '__main__':
-    #try:
-    set_seeds()
-    main()
-    #    play_sound()
-    #except Exception as err:
-    #    print('exception occurred ...')
-    #    print(err)
-    #    play_sound()
+    try:
+        set_seeds()
+        main()
+        play_sound()
+    except Exception as err:
+        print('exception occurred ...')
+        print(err)
+        play_sound()
