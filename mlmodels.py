@@ -116,7 +116,7 @@ class Tree():
             
     def predict(self, x):
         ''''''
-        print('Predicting class for {} samples ...'.format(x.shape[0]))
+        print('Predicting class for {} samples with {} leaves ...'.format(x.shape[0], self.n_leaves))
         start = time.time()
         pred = self.model.predict_proba(x)
         ptime = round(time.time() - start, 2)
