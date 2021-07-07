@@ -72,7 +72,7 @@ def main():
         print('The prediction took {} seconds to predict {} samples.'.format(time, num_samples))
         print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels[0:num_samples])))
     
-    #train SVM model and run prediction.
+    #train SVM model and run prediction, wrapped with CalibratedClassifierCV.
     svm = SVM()
     svm.fit(np.squeeze(train)[:, 0:slen], train_labels)
     svm.save()
@@ -81,12 +81,14 @@ def main():
     print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels)))
     
     #train tree model and run prediction
-    tree = Tree()
-    tree.fit(np.squeeze(train)[:, 0:slen], train_labels)
-    tree.save()
-    pred, time = tree.predict(np.squeeze(test)[:, 0:slen])
-    print('The prediction took {} seconds.'.format(time))
-    print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels)))
+    leaves = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100]
+    for i in range(len(leaves)):
+        tree = Tree(leaves[i])
+        tree.fit(np.squeeze(train)[:, 0:slen], train_labels)
+        tree.save(path = './model/tree_{}.pkl'.format(leaves[i]))
+        pred, time = tree.predict(np.squeeze(test)[:, 0:slen])
+        print('The prediction took {} seconds.'.format(time))
+        print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels)))
     
     #train 15 forest models with cvarious numbers of trees and run prediction
     trees = [1, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200, 250, 300]
