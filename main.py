@@ -70,7 +70,7 @@ def main():
         knn = KNN.load('./model/knn_{}.pkl'.format(neighbors[i]))
         pred, time = knn.predict(np.squeeze(test)[0:num_samples, 0:slen])
         print('The prediction took {} seconds to predict {} samples.'.format(time, num_samples))
-        print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels[0:num_samples])))
+        print('Accuracy: {}%'.format(calc_accuracy(np.argmax(pred, axis = 1), test_labels[0:num_samples])))
     
     #train SVM model and run prediction, wrapped with CalibratedClassifierCV.
     svm = SVM()
@@ -78,7 +78,7 @@ def main():
     svm.save()
     pred, time = svm.predict(np.squeeze(test)[:, 0:slen])
     print('The prediction took {} seconds.'.format(time))
-    print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels)))
+    print('Accuracy: {}%'.format(calc_accuracy(np.argmax(pred, axis = 1), test_labels)))
     
     #train tree model and run prediction
     leaves = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100]
@@ -88,7 +88,7 @@ def main():
         tree.save(path = './model/tree_{}.pkl'.format(leaves[i]))
         pred, time = tree.predict(np.squeeze(test)[:, 0:slen])
         print('The prediction took {} seconds.'.format(time))
-        print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels)))
+        print('Accuracy: {}%'.format(calc_accuracy(np.argmax(pred, axis = 1), test_labels)))
     
     #train 15 forest models with cvarious numbers of trees and run prediction
     trees = [1, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200, 250, 300]
@@ -98,7 +98,7 @@ def main():
         forest.save(path = './model/forest_{}.pkl'.format(trees[i]))
         pred, time = forest.predict(np.squeeze(test)[:, 0:slen])
         print('The prediction took {} seconds.'.format(time))
-        print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels)))
+        print('Accuracy: {}%'.format(calc_accuracy(np.argmax(pred, axis = 1), test_labels)))
     
     #train logistic regression model and run prediction
     logreg = LogReg()
@@ -106,7 +106,7 @@ def main():
     logreg.save()
     pred, time = logreg.predict(np.squeeze(test)[:, 0:slen])
     print('The prediction took {} seconds.'.format(time))
-    print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels)))
+    print('Accuracy: {}%'.format(calc_accuracy(np.argmax(pred, axis = 1), test_labels)))
     
     #train guassian naive bayes model and run prediction
     gnb = GNB()
@@ -114,7 +114,7 @@ def main():
     gnb.save()
     pred, time = gnb.predict(np.squeeze(test)[:, 0:slen])
     print('The prediction took {} seconds.'.format(time))
-    print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels)))
+    print('Accuracy: {}%'.format(calc_accuracy(np.argmax(pred, axis = 1), test_labels)))
     
     #train 13 adaboost ensemble model and run prediction
     ests = [1, 5, 10, 20, 30, 40, 50, 75, 100, 200, 300]
@@ -124,7 +124,7 @@ def main():
         ada.save(path = './model/ada_{}.pkl'.format(ests[i]))
         pred, time = ada.predict(np.squeeze(test)[:, 0:slen])
         print('The prediction took {} seconds.'.format(time))
-        print('Accuracy: {}%'.format(calc_accuracy(pred, test_labels)))
+        print('Accuracy: {}%'.format(calc_accuracy(np.argmax(pred, axis = 1), test_labels)))
     
 
 def load_data(normalize = True, norm_type = 1, for_training = True):
