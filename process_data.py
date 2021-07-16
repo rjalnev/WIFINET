@@ -9,7 +9,7 @@ def process_raw_data(size = 10000, normalize = False, seed = None):
     num_repeats = np.asarray([5, 5, 5, 5, 5, 5, 5])
     num_samples = np.asarray([675, 675, 675, 135, 135, 135, 125])
     total_samples = np.sum(num_tests * num_repeats * num_samples)
-    random_spacing = np.asarray([570000, 570000, 570000, 2900000, 2900000, 2900000, 3100000]);
+    random_spacing = np.asarray([570000, 570000, 570000, 2900000, 2900000, 2900000, 3100000])
     
     path = 'data/info.csv' #generate path for info
     info = np.loadtxt(open(path), delimiter = ',', dtype = np.float32) #load test info
@@ -17,7 +17,7 @@ def process_raw_data(size = 10000, normalize = False, seed = None):
     IQ = np.empty((total_samples, 2, size), dtype = np.float32)
     labels = np.empty((total_samples, 8), dtype = np.float32)
     
-    idx = 0;
+    idx = 0
     sample_index = 0
     #loop through all of the binary files for each standard
     for i in range(0, num_standards):
