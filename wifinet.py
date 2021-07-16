@@ -11,9 +11,17 @@ from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint
 #from tensorflow.keras import optimizers
 
 class WIFINet():
-    ''''''
+    '''WIFINet model.
+         input_shape: Shape of input, i.e. (20000, 1)
+         output_shape: Shape of output, i.e. the number of class, (7, )
+         dilation_depth: Number of stacked residual blocks, i.e. 10
+         num_filters: Number of filters to use in convs, i.e. 32
+         O1: Kernel Size of output conv, i.e. 32
+         O2: Pool size of average pooling in output layers, larger values reduces dimensionality by larger factor, i.e. 10
+         D1: Size of 1st dense layer in output layers, i.e. 1024, 
+         D2: Size of 2nd dense layer in output layers, i.e. 128'''
     def __init__(self, input_shape = None, output_shape = None, dilation_depth = None, num_filters = None, O1 = None, O2 = None, D1 = None, D2 = None):
-        ''''''
+        '''Creates a new model and sets epoch to 0. Inits to None if using load to load a model.'''
         if input_shape is None:
             self.model = None
             self.current_epoch = None
@@ -22,7 +30,7 @@ class WIFINet():
             self.current_epoch = 0
 
     def residual_block(self, x, i, num_filters):
-        ''''''
+        '''Creates a residual block. Returns the residual and skip connection.'''
         sigm = Conv1D(num_filters,
                       2,
                       name = 'gate_sigm_{}'.format(2 ** i),
@@ -43,7 +51,7 @@ class WIFINet():
         return res, skip
         
     def build_model(self, input_shape, output_shape, dilation_depth, num_filters, O1, O2, D1, D2):
-        ''''''
+        '''Builds the model.'''
         #input layers
         x = Input(shape = input_shape, name = 'input')
         
@@ -73,7 +81,7 @@ class WIFINet():
 
     def fit(self, X, Y, validation_data = None, epochs = 10, batch_size = 32, optimizer = 'adam', verbose = 1, 
             save = False, directory = './model/', model_name = 'wifinet', hist_name = 'wifinet_history'):
-        ''''''
+        '''Trains the model and returns history. If save = True then saves best model and training history.'''
         if save: # set callback functions if saving model
             if not os.path.exists(directory): os.makedirs(directory)
             mpath = directory + model_name + '.h5'
@@ -100,6 +108,7 @@ class WIFINet():
 
     @classmethod
     def load(cls, model_path = './model/wifinet.h5', hist_path = './model/wifinet_history.csv'):
+        '''Loads a pretrained model. Can continue training if desired.'''
         _cls = cls.__new__(cls)
         _cls.model = load_model(model_path)
         hist_shape = np.genfromtxt(hist_path, delimiter = ',', skip_header = 1).shape
@@ -107,7 +116,7 @@ class WIFINet():
         return _cls
         
     def predict(self, x):
-        ''''''
+        '''Predicts class for x and returns prediction and time.'''
         print('Predicting class for {} samples ...'.format(x.shape[0]))
         start = time.time()
         return self.model.predict(x), round(time.time() - start, 2)
