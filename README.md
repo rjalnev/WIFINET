@@ -48,4 +48,3 @@ The dataset consited of 118,125 samples randomly sampled from 585 tests collecti
 15. X. Zhang, Y. Gao, Y. Yu and W. Li, "MUSIC ARTIST CLASSIFICATION WITH WAVENET CLASSIFIER FOR RAW WAVEFORM AUDIO DATA," arXiv, 2020. 
 16. W. Balid, M. O. Al Kalaa, S. Rajab, H. Tafish and H. H. Refai, "Development of measurement techniques and tools for coexistence testing of wireless medical devices," in 2016 IEEE Wireless Communications and Networking Conference Workshops, Doha, 2016. 
 17. S. Ruder, "An overview of gradient descent optimization algorithms," 19 January 2016. [Online]. Available: https://ruder.io/optimizing-gradient-descent/index.html#adam. [Accessed 3 July 2021].
-18. R. Estes (rjalnev), "WIFINET [Source Code]," 2021. [Online]. Available: https://github.com/rjalnev/WIFINET.
